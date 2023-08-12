@@ -1,10 +1,13 @@
+//can you paste here
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:shop_app/models/login_details.dart';
-import 'package:shop_app/providers/auth.dart';
-import 'package:shop_app/screens/products_overview_screen.dart';
 
+import 'package:flutter/material.dart';
+
+import '../models/login_details.dart';
+import '../providers/auth.dart';
+import 'products_overview_screen.dart';
 import 'signup.dart';
+import 'splashscreen.dart';
 
 class AuthScreen extends StatelessWidget {
   static const routeName = '/auth';
@@ -103,9 +106,9 @@ class _AuthCardState extends State<_AuthCard> {
           setState(() {
             _isloading = false;
           });
-          Helperlogdetails.saveuserlogindetails(isloggedin: true);
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => ProductOverviewScreen()));
+          UserLoginSharedPreferences.saveUserLoginStatus(isLoggedIn: true);
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => Splashscreen()));
         }
       });
     }
@@ -113,7 +116,6 @@ class _AuthCardState extends State<_AuthCard> {
 
   @override
   Widget build(BuildContext context) {
-    // final deviceSize = MediaQuery.of(context).size;
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),

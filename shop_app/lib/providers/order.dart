@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop_app/providers/product.dart';
 
 import './cart.dart';
+import 'product.dart';
 
 class OrderItem {
   final String id;
   final double amount;
-  final List<CartItem> Products;
+  final List<CartItem> products;
   final DateTime datetime;
 
   OrderItem({
     required this.id,
     required this.amount,
-    required this.Products,
+    required this.products,
     required this.datetime,
   });
 }
@@ -26,20 +26,21 @@ class Orders with ChangeNotifier {
   }
 
   Future<void> fetchAndSetOrder() async {
-    const url =
-        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json';
-    final response = await http.get(url as Uri);
+    final url = Uri.parse(
+        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json');
+    final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
-    final extractedData = json.decode(response.body) as Map<String, dynamic>;
+    final extractedData = json.decode(response.body);
     if (extractedData == null) {
       return;
     }
     extractedData.forEach((orderId, orderData) {
+      final amount = orderData['amount'] as double ?? 0.0;
       loadedOrders.add(OrderItem(
         id: orderId,
-        amount: orderData['amount'],
+        amount: amount,
         datetime: DateTime.parse(orderData['dataTime']),
-        Products: {orderData['products'] as List<Product>}
+        products: {orderData['products'] as List<Product>}
             .map(
               (item) => CartItem(
                 id: '',
@@ -56,10 +57,10 @@ class Orders with ChangeNotifier {
   }
 
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
-    const url =
-        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json';
+    final url = Uri.parse(
+        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json');
     final timestamp = DateTime.now();
-    final response = await http.post(url as Uri,
+    final response = await http.post(url,
         body: json.encode({
           'amount': total,
           'dateTime': DateTime.now().toIso8601String(),
@@ -77,7 +78,7 @@ class Orders with ChangeNotifier {
       OrderItem(
         id: json.decode(response.body)['name'],
         amount: total,
-        Products: cartProducts,
+        products: cartProducts,
         datetime: DateTime.now(),
       ),
     );

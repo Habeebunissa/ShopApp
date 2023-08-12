@@ -1,54 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop_app/providers/product.dart';
+import 'product.dart';
 
 class Products with ChangeNotifier {
-  List<Product> _items = [
-    Product(
-        id: 'P1',
-        title: 'mobile',
-        description: 'smart phone 5G ',
-        price: 799,
-        imageUrl:
-            'https://m.media-amazon.com/images/I/71J8tz0UeJL._SX679_.jpg'),
-    Product(
-        id: 'P2',
-        title: 'earphone',
-        description: 'Super bass boost bluestooth',
-        price: 799,
-        imageUrl:
-            'https://static.wixstatic.com/media/18b1a0_1584971f67b647e697bc6ce1180cf6fd~mv2.webp'),
-    Product(
-        id: 'P3',
-        title: 'laptop',
-        description: 'New Generation of Fastest Laptop',
-        price: 799,
-        imageUrl:
-            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRs73tuBBH7bxe4EY8hYUK2E0XDiv-kfon7eWSjRnQ600O850GT34A2XyLCdzJxmUYFXZw&usqp=CAU'),
-    Product(
-        id: 'P4',
-        title: 'mouse',
-        description: 'Wireless mouse with high performance',
-        price: 999,
-        imageUrl:
-            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToDf8oMVn2ju5hWccwOoYoAhiAxWR0h2X7J2gd08E9qd0TicMEr7w-GUevKVLRCGAEVEk&usqp=CAU '),
-    Product(
-        id: 'P5',
-        title: 'cap',
-        description: 'sun protection cap',
-        price: 499,
-        imageUrl:
-            'https://m.media-amazon.com/images/I/61G6HqHEpZL._SX679_.jpg'),
-    Product(
-        id: 'P6',
-        title: 'perfume',
-        description: 'smell good in summer',
-        price: 479,
-        imageUrl:
-            "https://cdn.shopify.com/s/files/1/1895/2657/products/Hugo_Boss_Bottled_Night_EDT_For_Men.jpg_A.jpg?v=1622041386&width=1800"),
-  ];
+  List<Product> _items = [];
 
   List<Product> get items {
     return [..._items];
@@ -63,40 +19,68 @@ class Products with ChangeNotifier {
   }
 
   Future<void> fetchAndSetProducts() async {
-    final url = Uri.parse(
-        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json');
+    const url =
+        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json';
     try {
-      final response = await http.get(url);
-      final extracedData = json.decode(response.body) as Map<String, dynamic>;
-      if (extracedData == null) {
-        return;
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        // Check if the response body is not empty
+        if (response.body == null || response.body.isEmpty) {
+          // Handle the case when the API returns an empty response
+          return;
+        }
+
+        final extractedData = json.decode(response.body);
+        if (extractedData == null) {
+          // Handle the case when the API returns null data
+          return;
+        }
+
+        final List<Product> loadedProducts = [];
+        extractedData.forEach((prodId, prodData) {
+          final String title = prodData["title"] ?? '';
+          final String description = prodData["description"] ?? '';
+          final String imageUrl = prodData["imageUrl"] ?? '';
+          double price = 0.00;
+          if (prodData["price"] is String) {
+            final double? parsedPrice = double.tryParse(prodData["price"]);
+            if (parsedPrice != null) {
+              price = parsedPrice;
+            }
+          }
+
+          final bool? isFavorite = prodData["isFavourite"] as bool?;
+          loadedProducts.add(
+            Product(
+              id: prodId,
+              title: title,
+              price: price,
+              description: description,
+              imageUrl: imageUrl,
+              isFavorite: isFavorite ?? false,
+            ),
+          );
+        });
+
+        _items = loadedProducts;
+        notifyListeners();
+      } else {
+        // Handle the case when the API call is not successful
+        throw Exception('Failed to load products');
       }
-      final List<Product> loadedProducts = [];
-
-      extracedData.forEach((prodId, prodData) {
-        loadedProducts.add(Product(
-          id: prodId,
-          title: prodData['title'],
-          description: prodData['description'],
-          price: prodData['price'],
-          isFavorite: prodData['isFavorite'],
-          imageUrl: prodData['imageUrl'],
-        ));
-      });
-      _items = loadedProducts;
-
-      notifyListeners();
     } catch (error) {
+      // Handle other errors, e.g., network issues, decoding errors, etc.
       throw (error);
     }
   }
 
   Future<void> addProduct(Product product) async {
-    final url = Uri.parse(
-        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json');
+    final url =
+        'https://shopapp-30d17-default-rtdb.firebaseio.com/products.json';
     try {
       final response = await http.post(
-        url,
+        Uri.parse(url),
         body: json.encode({
           'title': product.title,
           'description': product.description,
@@ -124,9 +108,9 @@ class Products with ChangeNotifier {
   Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
-      final url = Uri.parse(
-          'https://shopapp-30d17-default-rtdb.firebaseio.com/products/$id.json');
-      await http.patch(url,
+      final url =
+          'https://shopapp-30d17-default-rtdb.firebaseio.com/products/$id.json';
+      await http.patch(Uri.parse(url),
           body: json.encode({
             'title': newProduct.title,
             'description': newProduct.description,

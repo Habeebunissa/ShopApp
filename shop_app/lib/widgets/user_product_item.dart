@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/screens/edit_product_screen.dart';
+
 import '../providers/product_provider.dart';
-import '../screens/edit_product_screen.dart';
 
 // ignore: must_be_immutable
 class UserProductItem extends StatelessWidget {
