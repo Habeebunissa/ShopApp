@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shop_app/providers/auth.dart';
+
 import 'auth_screen.dart';
 
 class SignUp extends StatefulWidget {
